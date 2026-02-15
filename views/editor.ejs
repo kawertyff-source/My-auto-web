@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f8f9fa; }
+        .navbar { background: #343a40; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        textarea { width: 100%; height: 400px; padding: 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; box-sizing: border-box; resize: none; }
+        .status-bar { margin-top: 10px; font-size: 0.9rem; color: #666; font-style: italic; }
+        a { color: #ff4757; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <span>ยินดีต้อนรับ: <b><%= user.email %></b></span>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <div class="container">
+        <h3>📝 พื้นที่ทำงานของคุณ (บันทึกอัตโนมัติ)</h3>
+        <div id="status" class="status-bar">พร้อมทำงาน...</div>
+        <textarea id="workarea" placeholder="พิมพ์งานของคุณตรงนี้..."><%= user.content %></textarea>
+    </div>
+
+    <script>
+        const workarea = document.getElementById('workarea');
+        const status = document.getElementById('status');
+        let timer;
+
+        // ระบบ Auto-save เมื่อหยุดพิมพ์เกิน 1.5 วินาที
+        workarea.addEventListener('input', () => {
+            status.innerText = "กำลังพิมพ์...";
+            clearTimeout(timer);
+            
+            timer = setTimeout(async () => {
+                status.innerText = "กำลังบันทึกร่าง...";
+                try {
+                    const response = await fetch('/api/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: workarea.value })
+                    });
+                    const data = await response.json();
+                    if(data.success) {
+                        status.innerText = "บันทึกล่าสุดเมื่อ: " + data.time;
+                    }
+                } catch (err) {
+                    status.innerText = "บันทึกไม่สำเร็จ ตรวจสอบการเชื่อมต่อ";
+                }
+            }, 1500);
+        });
+    </script>
+</body>
+</html>
